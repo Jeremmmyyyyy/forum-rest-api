@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: forum_php_app
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "8000:8000"
+    command: sh -c "composer install && php -S 0.0.0.0:8000 -t public public/routes.php"
+
+  db:
+    image: mysql:8.0
+    container_name: forum_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: h187m8_botafogo
+      MYSQL_USER: forumuser
+      MYSQL_PASSWORD: dbpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/database.sql:/docker-entrypoint-initdb.d/database.sql:ro
+      - ./mysql-data:/var/lib/mysql
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: forum_phpmyadmin
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    restart: unless-stopped

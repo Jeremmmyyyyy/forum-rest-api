@@ -11,3 +11,5 @@
 /bin/
 /vendor/
 /composer.lock
+
+/mysql-data
