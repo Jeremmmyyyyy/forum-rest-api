@@ -7,7 +7,7 @@ services:
       - ./:/app
     ports:
       - "8000:8000"
-    command: sh -c "composer install && php -S 0.0.0.0:8000 -t public public/routes.php"
+    command: sh -c "chmod -R 777 public && composer install && composer dump-autoload && php -S 0.0.0.0:8000 -t public public/routes.php"
 
   db:
     image: mysql:8.0
