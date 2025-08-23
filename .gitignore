@@ -12,5 +12,7 @@
 /vendor/
 /composer.lock
 /logs/*
+.env
+/public/uploads*
 
 /mysql-data
