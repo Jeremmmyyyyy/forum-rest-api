@@ -19,6 +19,8 @@ services:
       MYSQL_PASSWORD: dbpassword
     ports:
       - "3306:3306"
+    networks:
+      - proxy-db
     volumes:
       - ./database/database.sql:/docker-entrypoint-initdb.d/database.sql:ro
       - ./mysql-data:/var/lib/mysql
@@ -35,3 +37,7 @@ services:
     depends_on:
       - db
     restart: unless-stopped
+
+networks:
+  proxy-db:
+    external: true
