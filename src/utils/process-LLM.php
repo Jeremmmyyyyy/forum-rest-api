@@ -22,7 +22,7 @@ $questionBody = $argv[3];
 $questionId = (int)$argv[4];
 
 // Send the question to the LLM
-$response = sendQuestionToLLM($page, $divId, $questionBody);
+$response = sendQuestionToLLM($questionId, $page, $divId, $questionBody);
 $response = json_decode($response, true);
 
 // Create the answer in the database only if a valid response is received

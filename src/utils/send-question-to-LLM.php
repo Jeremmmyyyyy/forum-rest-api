@@ -5,7 +5,7 @@
  * File: send-question-to-LLM.php
  */
 
-function sendQuestionToLLM(string $id_page, string $id_notes_div, string $question)
+function sendQuestionToLLM(string $questionId, string $id_page, string $id_notes_div, string $question)
 {
     $url = 'https://botafogo.epfl.ch/llm/chat/completions';
 
@@ -18,6 +18,7 @@ function sendQuestionToLLM(string $id_page, string $id_notes_div, string $questi
         "Content-Type: application/json",
         "Authorization: Bearer " . $apiKey,
         "model: CaLlm-course",
+        "id: $questionId",
         "idpage: $id_page",
         "idnotesdiv: $id_notes_div"
     ];
