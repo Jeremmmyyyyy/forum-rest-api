@@ -23,6 +23,7 @@ services:
       - "3306:3306"
     networks:
       - proxy-db
+      - matomo-net
       - default
     volumes:
       - ./database/database.sql:/docker-entrypoint-initdb.d/database.sql:ro
@@ -45,4 +46,6 @@ services:
 
 networks:
   proxy-db:
+    external: true
+  matomo-net:
     external: true
