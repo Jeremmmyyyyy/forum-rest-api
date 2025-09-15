@@ -7,6 +7,8 @@ services:
       - ./:/app
     ports:
       - "8000:8000"
+    networks:
+      - default
     command: sh -c "chmod -R 777 public && composer install && composer dump-autoload && php -S 0.0.0.0:8000 -t public public/routes.php"
 
   db:
@@ -21,6 +23,7 @@ services:
       - "3306:3306"
     networks:
       - proxy-db
+      - default
     volumes:
       - ./database/database.sql:/docker-entrypoint-initdb.d/database.sql:ro
       - ./mysql-data:/var/lib/mysql
@@ -34,6 +37,8 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "8081:80"
+    networks:
+      - default
     depends_on:
       - db
     restart: unless-stopped
