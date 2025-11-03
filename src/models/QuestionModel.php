@@ -51,7 +51,9 @@ class QuestionModel extends DatabaseModel
             location,
             html,
             {{sections}}.name AS section_name,
-            IF(COUNT(DISTINCT llm_answers.id) > 0, TRUE, FALSE) AS has_llm_answer";
+            IF(COUNT(DISTINCT llm_answers.id) > 0, TRUE, FALSE) AS has_llm_answer,
+            ANY_VALUE(la.role) AS last_activity_role,
+            ANY_VALUE(la.date) AS last_activity_date";
 
         // Add user_is_author part if userId is not null
         if ($userId !== null) {
@@ -124,8 +126,8 @@ class QuestionModel extends DatabaseModel
             'answers' => " ORDER BY answers DESC, {{questions}}.date DESC",
             'no-answer' => " ORDER BY answers ASC, {{questions}}.date DESC",
             //'last-activity' => " ORDER BY last_activity DESC, date DESC",
-            'last-activity' => " ORDER BY CASE WHEN la.role = 'student' THEN 0 ELSE 1 END, la.date DESC, {{questions}}.date DESC",
-            default => " ORDER BY {{questions}}.date DESC",
+            // 'last-activity' => " ORDER BY CASE WHEN la.role = 'student' THEN 0 ELSE 1 END, la.date DESC, {{questions}}.date DESC",
+            'last-activity' => " ORDER BY CASE WHEN last_activity_role = 'student' THEN 0 ELSE 1 END, last_activity_date DESC, {{questions}}.date DESC",            default => " ORDER BY {{questions}}.date DESC",
         };
 
         // Add the LIMIT and OFFSET clauses to implement pagination
