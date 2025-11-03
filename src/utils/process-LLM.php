@@ -13,7 +13,7 @@ use Model\QuestionModel;
 use Model\UserModel;
 
 if ($argc < 6) {
-    exit("Usage: php process-LLM.php <page> <div_id> <question_body> <question_id> <question_location>\n");
+    exit("Usage: php process-LLM.php <page> <div_id> <question_body> <question_id> <question_location> [image_name]\n");
 }
 
 $page = $argv[1];
@@ -21,8 +21,9 @@ $divId = $argv[2];
 $questionBody = $argv[3];
 $questionId = (int)$argv[4];
 $questionLocation = $argv[5];
+$imageName = $argv[6] ?? null;
 
-sendQuestionToLLM($questionId, $page, $divId, $questionBody, $questionLocation);
+sendQuestionToLLM($questionId, $page, $divId, $questionBody, $questionLocation, $imageName);
 // Send the question to the LLM
 // $response = sendQuestionToLLM($questionId, $page, $divId, $questionBody);
 // $response = json_decode($response, true);

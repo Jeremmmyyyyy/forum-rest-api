@@ -5,7 +5,7 @@
  * File: send-question-to-LLM.php
  */
 
-function sendQuestionToLLM(string $questionId, string $id_page, string $id_notes_div, string $question, string $questionLocation = 'nan')
+function sendQuestionToLLM(string $questionId, string $id_page, string $id_notes_div, string $question, string $questionLocation = 'nan', ?string $imageName = null)
 {
     $url = 'https://botafogo.epfl.ch/llm/chat/completions';
 
@@ -23,12 +23,34 @@ function sendQuestionToLLM(string $questionId, string $id_page, string $id_notes
         "location: $questionLocation"
     ];
 
+    $contentArray = [
+        [
+            "type" => "text",
+            "content" => $question
+        ]
+    ];
+
+    // If there's an image, include it in the request
+    if ($imageName && $imageName !== 'nan') {
+        $imageFile = __DIR__ . '/../../public/uploads/' . basename($imageName);
+        if (file_exists($imageFile)) {
+            $imageData = base64_encode(file_get_contents($imageFile));
+            $imageExtension = pathinfo($imageFile, PATHINFO_EXTENSION);
+            $imageUrl = "data:image/$imageExtension;base64,$imageData";
+            
+            $contentArray[] = [
+                "type" => "image",
+                "url" => $imageUrl
+            ];
+        }
+    }
+
     $data = [
         "model" => "CaLlm-n8n_pipeline",
         "messages" => [
             [
-            "role" => "user",
-            "content" => $question
+                "role" => "user",
+                "content" => $contentArray
             ]
         ]
     ];

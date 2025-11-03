@@ -195,7 +195,7 @@ class QuestionController extends BaseController
 
         // Execute the LLM processing asynchronously
         if ($postData['page'] !== 'questions_generales_GM' && $postData['page'] !== 'questions_generales_OL') {
-            $this->executeLLMProcess($postData['page'], $postData['div-id'] ?? 'nan', $postData['question-body'], $questionId, $postData['question-location'] ?? 'nan');
+            $this->executeLLMProcess($postData['page'], $postData['div-id'] ?? 'nan', $postData['question-body'], $questionId, $postData['question-location'] ?? 'nan', $imageName);
         }
 
         // Send the question to LLM and save response in the database (if the page is not questions_generales_GM or questions_generales_OL)
@@ -225,18 +225,21 @@ class QuestionController extends BaseController
      * @param string|null $divId
      * @param string $questionBody
      * @param int $questionId
+     * @param string|null $questionLocation
+     * @param string|null $imageName
      * @return void
      */
-    protected function executeLLMProcess(string $page, ?string $divId, string $questionBody, int $questionId, ?string $questionLocation = null): void
+    protected function executeLLMProcess(string $page, ?string $divId, string $questionBody, int $questionId, ?string $questionLocation = null, ?string $imageName = null): void
     {
         $command = sprintf(
-            'php %s/../../utils/process-LLM.php %s %s %s %d %s > /dev/null 2>&1 &',
+            'php %s/../../utils/process-LLM.php %s %s %s %d %s %s > /dev/null 2>&1 &',
             __DIR__,
             escapeshellarg($page),
             escapeshellarg($divId),
             escapeshellarg($questionBody),
             $questionId,
-            escapeshellarg($questionLocation ?? 'nan')
+            escapeshellarg($questionLocation ?? 'nan'),
+            escapeshellarg($imageName ?? 'nan')
         );
 
         exec($command);
