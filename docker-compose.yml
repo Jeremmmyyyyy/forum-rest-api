@@ -19,6 +19,7 @@ services:
       MYSQL_DATABASE: h187m8_botafogo
       MYSQL_USER: forumuser
       MYSQL_PASSWORD: dbpassword
+      TZ: Europe/Paris
     ports:
       - "3306:3306"
     networks:
