@@ -34,7 +34,8 @@ class QuestionModel extends DatabaseModel
         bool    $onlyBookmarkedQuestions = false,
         ?int    $pageNumber = null,
         ?int    $questionsPerPage = null,
-        string  $sortBy = 'date'): false|mysqli_result
+        string  $sortBy = 'date',
+        ?string $search = null): false|mysqli_result
     {
         $params = [];
 
@@ -115,6 +116,10 @@ class QuestionModel extends DatabaseModel
             $query .= " AND {{questions}}.id IN (SELECT id_question FROM {{bookmarks}} WHERE id_user = ?)";
             $params[] = $userId;
         }
+        if ($search !== null && $search !== '') {
+            $query .= " AND body LIKE ?";
+            $params[] = "%$search%";
+        }
 
         $query .= " GROUP BY {{questions}}.id";
 
@@ -150,7 +155,7 @@ class QuestionModel extends DatabaseModel
      * @return int The number of questions.
      * @throws Exception
      */
-    public function countQuestions(?string $pageId = null, ?string $divId = null, ?int $userId = null, bool $onlyUsersQuestions = false): int
+    public function countQuestions(?string $pageId = null, ?string $divId = null, ?int $userId = null, bool $onlyUsersQuestions = false, ?string $search = null): int
     {
         $params = [];
         $query = "SELECT COUNT(*) AS total FROM {{questions}} WHERE visible = true";
@@ -166,6 +171,10 @@ class QuestionModel extends DatabaseModel
         if ($userId !== null && $onlyUsersQuestions) {
             $query .= " AND id_user = ?";
             $params[] = $userId;
+        }
+        if ($search !== null && $search !== '') {
+            $query .= " AND body LIKE ?";
+            $params[] = "%$search%";
         }
 
         $result = $this->createAndRunPreparedStatement($query, $params);

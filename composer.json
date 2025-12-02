@@ -24,6 +24,7 @@
       "src/middlewares/cors.php",
       "src/middlewares/authentication.php",
       "src/utils/error.php",
+      "src/utils/logger.php",
       "src/utils/serve-file.php",
       "src/utils/generate-preview.php",
       "src/utils/handle-image.php",

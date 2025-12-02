@@ -38,7 +38,8 @@ get(API_ROOT_URI . '/get-questions/all-questions', function () {
     setCorsHeaders();
     $pageNumber = $_GET['page'] ?? null;
     $sort = $_GET['sort'] ?? 'DATE';
-    (new QuestionController())->fetchQuestions(sort: $sort, pageNumber: $pageNumber);
+    $search = $_GET['search'] ?? null;
+    (new QuestionController())->fetchQuestions(sort: $sort, pageNumber: $pageNumber, search: $search);
 });
 
 // Get all questions
@@ -47,8 +48,9 @@ get(API_ROOT_URI . '/get-questions/my-questions', function () {
     $pageNumber = $_GET['page'] ?? null;
     $sort = $_GET['sort'] ?? 'DATE';
     $onlyBookmarkedQuestions = $_GET['bookmarked-questions'] ?? false;
+    $search = $_GET['search'] ?? null;
     $user = getUserFromToken();
-    (new QuestionController())->fetchQuestions(sort: $sort, userId: $user['sciper'], onlyUsersQuestions: true, onlyBookmarkedQuestions: $onlyBookmarkedQuestions, pageNumber: $pageNumber);
+    (new QuestionController())->fetchQuestions(sort: $sort, userId: $user['sciper'], onlyUsersQuestions: true, onlyBookmarkedQuestions: $onlyBookmarkedQuestions, pageNumber: $pageNumber, search: $search);
 });
 
 // Get questions in a page
@@ -56,9 +58,10 @@ get(API_ROOT_URI . '/get-questions/$pageId', function ($pageId) {
     setCorsHeaders();
     $pageNumber = $_GET['page'] ?? null;
     $sort = $_GET['sort'] ?? 'DATE';
+    $search = $_GET['search'] ?? null;
     $user = getUserFromToken(enforceToken: false);
     $sciper = $user ? $user['sciper'] : null;
-    (new QuestionController())->fetchQuestions(sort: $sort, pageId: $pageId, userId: $sciper, pageNumber: $pageNumber);
+    (new QuestionController())->fetchQuestions(sort: $sort, pageId: $pageId, userId: $sciper, pageNumber: $pageNumber, search: $search);
 });
 
 // Get questions in a page with a div id
@@ -68,7 +71,8 @@ get(API_ROOT_URI . '/get-questions/$pageId/$divId', function ($pageId, $divId) {
     $sciper = $user ? $user['sciper'] : null;
     $pageNumber = $_GET['page'] ?? null;
     $sort = $_GET['sort'] ?? 'DATE';
-    (new QuestionController())->fetchQuestions(sort: $sort, pageId: $pageId, divId: $divId, userId: $sciper, pageNumber: $pageNumber);
+    $search = $_GET['search'] ?? null;
+    (new QuestionController())->fetchQuestions(sort: $sort, pageId: $pageId, divId: $divId, userId: $sciper, pageNumber: $pageNumber, search: $search);
 });
 
 // Get a question by its ID

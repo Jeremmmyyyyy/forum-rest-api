@@ -32,16 +32,17 @@ class QuestionController extends BaseController
         ?int    $userId = null,
         bool    $onlyUsersQuestions = false,
         bool    $onlyBookmarkedQuestions = false,
-        ?int    $pageNumber = null): void
+        ?int    $pageNumber = null,
+        ?string $search = null): void
     {
         $questionsPerPage = 50;
 
         $questionModel = new QuestionModel();
 
-        $totalQuestions = $questionModel->countQuestions($pageId, $divId, $userId, $onlyUsersQuestions);
+        $totalQuestions = $questionModel->countQuestions($pageId, $divId, $userId, $onlyUsersQuestions, $search);
         $totalPages = ceil($totalQuestions / $questionsPerPage);
 
-        $result = $questionModel->getQuestions($pageId, $divId, $userId, $onlyUsersQuestions, $onlyBookmarkedQuestions, $pageNumber, $questionsPerPage, $sort);
+        $result = $questionModel->getQuestions($pageId, $divId, $userId, $onlyUsersQuestions, $onlyBookmarkedQuestions, $pageNumber, $questionsPerPage, $sort, $search);
 
         // Fetch all rows directly into an array
         $questions = $result->fetch_all(MYSQLI_ASSOC);

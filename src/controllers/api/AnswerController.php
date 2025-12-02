@@ -73,27 +73,43 @@ class AnswerController extends BaseController
             return;
         }
 
+        logMessage('Answer added successfully by sciper: ' . $sciper . ' for question: ' . $questionId, 'INFO');
+
         // Update the last activity date of the question
         $questionModel = new QuestionModel();
         $questionModel->updateQuestionLastActivity($questionId);
 
-        // Respond success immediately and continue best-effort notifications
-        $this->sendOutput('HTTP/1.1 200 OK', exit: false);
+        // Respond success immediately
+        // $this->sendOutput('HTTP/1.1 200 OK');
 
-        // Send an email notification to the author of the question
-        /*try {
-            $questionAuthorId = $questionModel->getQuestionAuthor($questionId)->fetch_assoc()['id_user'];
+        // Send an email notification asynchronously in the background
+        // This prevents blocking the HTTP response if email sending fails/hangs
+        // if (function_exists('fastcgi_finish_request')) {
+        //     fastcgi_finish_request();
+        // }
 
-            $userModel = new UserModel();
-            $questionAuthorEmailNotif = $userModel->getUserEmail($questionAuthorId)->fetch_assoc();
-            $questionAuthorEmail = $questionAuthorEmailNotif['email'];
+        // Send an email notification to the author of the question (best-effort)
+        $sendEmail = false;
+        if ($sendEmail) {
+            logMessage('Sending an email notification for question ' . $questionId . ' (answer by sciper: ' . $sciper . ')', 'INFO');
+            try {
+                $questionAuthorId = $questionModel->getQuestionAuthor($questionId)->fetch_assoc()['id_user'];
 
-            // Check if the user posting the answer is the user who asked the question
-            if ($questionAuthorId === $sciper) {
-                $questionAuthorEmailNotif['email_notifications'] = false;
-            }
+                // Check if the user posting the answer is the user who asked the question
+                if ($questionAuthorId === $sciper) {
+                    logMessage('Answer author matches question author: ' . $sciper . ', skipping notification', 'INFO');
+                    return;
+                }
 
-            if ($questionAuthorEmailNotif['email_notifications']) {
+                $userModel = new UserModel();
+                $questionAuthorEmailNotif = $userModel->getUserEmail($questionAuthorId)->fetch_assoc();
+                
+                if (!$questionAuthorEmailNotif['email_notifications']) {
+                    logMessage('Email notifications disabled for user: ' . $questionAuthorId, 'INFO');
+                    return;
+                }
+
+                $questionAuthorEmail = $questionAuthorEmailNotif['email'];
                 $questionSection = $questionModel->getQuestionSection($questionId)->fetch_assoc()['section_name'];
 
                 $mailer = new Mailer();
@@ -102,12 +118,13 @@ class AnswerController extends BaseController
                     $questionId,
                     $questionAuthorEmail
                 );
+                logMessage('Email notification sent successfully to: ' . $questionAuthorEmail, 'INFO');
+            } catch (Exception $e) {
+                logMessage('Failed to send answer notification: ' . $e->getMessage(), 'ERROR');
             }
-        } catch (Exception $e) {
-            // Do not crash the request if notifications fail
-            error_log('ADD_ANSWER_NOTIFICATION: ' . $e->getMessage());
-            // Best-effort: avoid attempting to send another email from within error handling
-        }*/
+        }else{
+            $this->sendOutput('HTTP/1.1 200 OK');
+        }
     }
 
     /**

@@ -28,7 +28,7 @@ class Mailer
         $this->mailer = new PHPMailer(true);
 
         // Server settings
-        $this->mailer->SMTPDebug = 0;                               //Debug output: 0 = off (for production use), 1 = client messages, 2 = client and server messages
+        $this->mailer->SMTPDebug = 1;                               //Debug output: 0 = off (for production use), 1 = client messages, 2 = client and server messages
         $this->mailer->isSMTP();                                    //Send using SMTP
         $this->mailer->Host = MAILER_HOST;                          //Set the SMTP server to send through
         $this->mailer->SMTPAuth = true;                             //Enable SMTP authentication
@@ -36,6 +36,17 @@ class Mailer
         $this->mailer->Password = MAILER_PASSWORD;                  //SMTP password
         $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; //Enable implicit TLS encryption
         $this->mailer->Port = MAILER_PORT;                          //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+        $this->mailer->Timeout = 10;                                //SMTP timeout in seconds
+
+        // Configure TLS 1.3 as per university requirements
+        $this->mailer->SMTPOptions = array(
+            'ssl' => array(
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'allow_self_signed' => false,
+                'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+            )
+        );
 
         // Sender
         $this->mailer->setFrom(MAILER_FROM, MAILER_FROM_NAME);
@@ -54,8 +65,8 @@ class Mailer
      */
     public function sendNewAnswerNotification(?string $section, int $questionId, string $email): void
     {
-        $linkGm = 'https://botafogo.saitis.net/analyse-1-GM/?page=forum_toutes_les_questions&question=' . $questionId;
-        $linkOnline = 'https://botafogo.saitis.net/analyse-1-online/?page=forum_toutes_les_questions&question=' . $questionId;
+        $linkGm = 'https://botafogo.epfl.ch/analyse-1-GM/?page=forum_toutes_les_questions&question=' . $questionId;
+        $linkOnline = 'https://botafogo.epfl.ch/analyse-1-online/?page=forum_toutes_les_questions&question=' . $questionId;
 
         if ($section === null) {
             $section = 'Analyse 1';
@@ -113,8 +124,13 @@ class Mailer
             // Send the email
             $this->mailer->send();
 
-            // Save the email in the "Sent" folder
-            $this->saveEmail();
+            // Save the email in the "Sent" folder (best-effort, non-blocking)
+            try {
+                $this->saveEmail();
+            } catch (Exception $saveError) {
+                // Log but don't fail - saving to sent folder is not critical
+                logMessage('Failed to save email to Sent folder: ' . $saveError->getMessage(), 'WARNING');
+            }
 
             // Catch errors
         } catch (Exception $e) {
@@ -125,14 +141,44 @@ class Mailer
     /**
      * Save the email in the "Sent" folder and set it as "Seen".
      * @return void
+     * @throws Exception
      */
     private function saveEmail(): void
     {
         $path = MAILER_IMAP_SENT_FOLDER;
-        $imapStream = imap_open($path, $this->mailer->Username, $this->mailer->Password, 0, 1, array('DISABLE_AUTHENTICATOR' => 'GSSAPI'));
-        imap_append($imapStream, $path, $this->mailer->getSentMIMEMessage());
-        $check = imap_check($imapStream);
-        imap_setflag_full($imapStream, $check->Nmsgs, "\\Seen");
-        imap_close($imapStream);
+        
+        // Set a timeout for IMAP operations to prevent hanging
+        $timeout = 5; // 5 seconds timeout
+        $originalTimeout = ini_get('default_socket_timeout');
+        ini_set('default_socket_timeout', $timeout);
+        
+        try {
+            $imapStream = @imap_open(
+                $path, 
+                $this->mailer->Username, 
+                $this->mailer->Password, 
+                0, 
+                1, 
+                array('DISABLE_AUTHENTICATOR' => 'GSSAPI')
+            );
+            
+            if ($imapStream === false) {
+                throw new Exception('Failed to connect to IMAP: ' . imap_last_error());
+            }
+            
+            if (!imap_append($imapStream, $path, $this->mailer->getSentMIMEMessage())) {
+                throw new Exception('Failed to append email to Sent folder: ' . imap_last_error());
+            }
+            
+            $check = imap_check($imapStream);
+            if ($check !== false) {
+                imap_setflag_full($imapStream, $check->Nmsgs, "\\Seen");
+            }
+            
+            imap_close($imapStream);
+        } finally {
+            // Restore original timeout
+            ini_set('default_socket_timeout', $originalTimeout);
+        }
     }
 }
