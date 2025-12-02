@@ -164,7 +164,7 @@ class QuestionController extends BaseController
 
         $imageName = handleImageUpload();
 
-        // Check required fields
+                // Check required fields
         if (!isset($postData['question-body'], $postData['question-location'], $postData['page'])) {
             $this->sendOutput('HTTP/1.1 400 Bad Request', ['error' => 'Missing required fields']);
             return;

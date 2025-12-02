@@ -117,7 +117,9 @@ class QuestionModel extends DatabaseModel
             $params[] = $userId;
         }
         if ($search !== null && $search !== '') {
-            $query .= " AND body LIKE ?";
+            $query .= " AND (body LIKE ? OR {{sections}}.name LIKE ? OR id_notes_div LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
             $params[] = "%$search%";
         }
 
@@ -158,7 +160,13 @@ class QuestionModel extends DatabaseModel
     public function countQuestions(?string $pageId = null, ?string $divId = null, ?int $userId = null, bool $onlyUsersQuestions = false, ?string $search = null): int
     {
         $params = [];
-        $query = "SELECT COUNT(*) AS total FROM {{questions}} WHERE visible = true";
+        $query = "SELECT COUNT(*) AS total FROM {{questions}}";
+
+        if ($search !== null && $search !== '') {
+            $query .= " LEFT JOIN {{sections}} ON {{questions}}.id_page = {{sections}}.id_section";
+        }
+
+        $query .= " WHERE visible = true";
 
         if ($pageId !== null) {
             $query .= " AND id_page = ?";
@@ -173,7 +181,9 @@ class QuestionModel extends DatabaseModel
             $params[] = $userId;
         }
         if ($search !== null && $search !== '') {
-            $query .= " AND body LIKE ?";
+            $query .= " AND (body LIKE ? OR {{sections}}.name LIKE ? OR id_notes_div LIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
             $params[] = "%$search%";
         }
 
