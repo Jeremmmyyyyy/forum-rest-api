@@ -47,12 +47,23 @@ class QuestionModel extends DatabaseModel
             body,
             IF(COUNT(DISTINCT acceptedAnswers.id) > 0, TRUE, {{questions}}.resolved) AS resolved,
             IFNULL(l.likes, 0) AS likes,
-            IFNULL(a.answers, 0) AS answers,
+            IFNULL(answer_stats.total_answers, 0) AS answers,
+            IFNULL(answer_stats.student_answers, 0) AS student_answers,
+            IFNULL(answer_stats.student_accepted, 0) AS student_accepted,
+            IFNULL(answer_stats.student_liked, 0) AS student_liked,
+            IFNULL(answer_stats.assistant_answers, 0) AS assistant_answers,
+            IFNULL(answer_stats.assistant_accepted, 0) AS assistant_accepted,
+            IFNULL(answer_stats.assistant_liked, 0) AS assistant_liked,
+            IFNULL(answer_stats.teacher_answers, 0) AS teacher_answers,
+            IFNULL(answer_stats.teacher_accepted, 0) AS teacher_accepted,
+            IFNULL(answer_stats.teacher_liked, 0) AS teacher_liked,
+            IFNULL(answer_stats.llm_answers, 0) AS llm_answers,
+            IFNULL(answer_stats.llm_accepted, 0) AS llm_accepted,
+            IFNULL(answer_stats.llm_liked, 0) AS llm_liked,
             locked,
             location,
             html,
             {{sections}}.name AS section_name,
-            IF(COUNT(DISTINCT llm_answers.id) > 0, TRUE, FALSE) AS has_llm_answer,
             ANY_VALUE(la.role) AS last_activity_role,
             ANY_VALUE(la.date) AS last_activity_date";
 
@@ -71,10 +82,34 @@ class QuestionModel extends DatabaseModel
             GROUP BY id_question
         ) l ON {{questions}}.id = l.id_question
         LEFT JOIN (
-            SELECT id_parent_question, COUNT(*) AS answers
-            FROM {{answers}}
-            GROUP BY id_parent_question
-        ) a ON {{questions}}.id = a.id_parent_question
+            SELECT 
+                a.id_parent_question,
+                COUNT(*) AS total_answers,
+                SUM(CASE WHEN u.role = 'student' THEN 1 ELSE 0 END) AS student_answers,
+                MAX(CASE WHEN u.role = 'student' AND a.accepted = 1 THEN 1 ELSE 0 END) AS student_accepted,
+                MAX(CASE WHEN u.role = 'student' AND l.likes > 0 THEN 1 ELSE 0 END) AS student_liked,
+                
+                SUM(CASE WHEN u.role = 'assistant' THEN 1 ELSE 0 END) AS assistant_answers,
+                MAX(CASE WHEN u.role = 'assistant' AND a.accepted = 1 THEN 1 ELSE 0 END) AS assistant_accepted,
+                MAX(CASE WHEN u.role = 'assistant' AND l.likes > 0 THEN 1 ELSE 0 END) AS assistant_liked,
+                
+                SUM(CASE WHEN u.role = 'teacher' THEN 1 ELSE 0 END) AS teacher_answers,
+                MAX(CASE WHEN u.role = 'teacher' AND a.accepted = 1 THEN 1 ELSE 0 END) AS teacher_accepted,
+                MAX(CASE WHEN u.role = 'teacher' AND l.likes > 0 THEN 1 ELSE 0 END) AS teacher_liked,
+                
+                SUM(CASE WHEN u.role = 'llm' THEN 1 ELSE 0 END) AS llm_answers,
+                MAX(CASE WHEN u.role = 'llm' AND a.accepted = 1 THEN 1 ELSE 0 END) AS llm_accepted,
+                MAX(CASE WHEN u.role = 'llm' AND l.likes > 0 THEN 1 ELSE 0 END) AS llm_liked
+
+            FROM {{answers}} a
+            JOIN {{users}} u ON a.id_user = u.sciper
+            LEFT JOIN (
+                SELECT id_answer, COUNT(*) as likes 
+                FROM {{likes_answers}} 
+                GROUP BY id_answer
+            ) l ON a.id = l.id_answer
+            GROUP BY a.id_parent_question
+        ) answer_stats ON {{questions}}.id = answer_stats.id_parent_question
         LEFT JOIN (
             SELECT id, id_parent_question
             FROM {{answers}}
@@ -92,12 +127,7 @@ class QuestionModel extends DatabaseModel
                 GROUP BY id_parent_question
             )
         ) la ON {{questions}}.id = la.id_parent_question
-        LEFT JOIN (
-            SELECT DISTINCT a.id, a.id_parent_question
-            FROM {{answers}} a
-            INNER JOIN {{users}} u ON a.id_user = u.sciper
-            WHERE u.role = 'llm'
-        ) llm_answers ON {{questions}}.id = llm_answers.id_parent_question
+
         WHERE visible = true";
 
         if ($pageId !== null) {
