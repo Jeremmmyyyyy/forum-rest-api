@@ -54,6 +54,12 @@ class QuestionModel extends DatabaseModel
             IFNULL(answer_stats.assistant_answers, 0) AS assistant_answers,
             IFNULL(answer_stats.assistant_accepted, 0) AS assistant_accepted,
             IFNULL(answer_stats.assistant_liked, 0) AS assistant_liked,
+            IFNULL(answer_stats.super_assistant_answers, 0) AS super_assistant_answers,
+            IFNULL(answer_stats.super_assistant_accepted, 0) AS super_assistant_accepted,
+            IFNULL(answer_stats.super_assistant_liked, 0) AS super_assistant_liked,
+            IFNULL(answer_stats.normal_assistant_answers, 0) AS normal_assistant_answers,
+            IFNULL(answer_stats.normal_assistant_accepted, 0) AS normal_assistant_accepted,
+            IFNULL(answer_stats.normal_assistant_liked, 0) AS normal_assistant_liked,
             IFNULL(answer_stats.teacher_answers, 0) AS teacher_answers,
             IFNULL(answer_stats.teacher_accepted, 0) AS teacher_accepted,
             IFNULL(answer_stats.teacher_liked, 0) AS teacher_liked,
@@ -92,6 +98,14 @@ class QuestionModel extends DatabaseModel
                 SUM(CASE WHEN u.role = 'assistant' THEN 1 ELSE 0 END) AS assistant_answers,
                 MAX(CASE WHEN u.role = 'assistant' AND a.accepted = 1 THEN 1 ELSE 0 END) AS assistant_accepted,
                 MAX(CASE WHEN u.role = 'assistant' AND l.likes > 0 THEN 1 ELSE 0 END) AS assistant_liked,
+                
+                SUM(CASE WHEN u.role = 'assistant' AND u.endorsed_assistant = 1 THEN 1 ELSE 0 END) AS super_assistant_answers,
+                MAX(CASE WHEN u.role = 'assistant' AND u.endorsed_assistant = 1 AND a.accepted = 1 THEN 1 ELSE 0 END) AS super_assistant_accepted,
+                MAX(CASE WHEN u.role = 'assistant' AND u.endorsed_assistant = 1 AND l.likes > 0 THEN 1 ELSE 0 END) AS super_assistant_liked,
+
+                SUM(CASE WHEN u.role = 'assistant' AND (u.endorsed_assistant = 0 OR u.endorsed_assistant IS NULL) THEN 1 ELSE 0 END) AS normal_assistant_answers,
+                MAX(CASE WHEN u.role = 'assistant' AND (u.endorsed_assistant = 0 OR u.endorsed_assistant IS NULL) AND a.accepted = 1 THEN 1 ELSE 0 END) AS normal_assistant_accepted,
+                MAX(CASE WHEN u.role = 'assistant' AND (u.endorsed_assistant = 0 OR u.endorsed_assistant IS NULL) AND l.likes > 0 THEN 1 ELSE 0 END) AS normal_assistant_liked,
                 
                 SUM(CASE WHEN u.role = 'teacher' THEN 1 ELSE 0 END) AS teacher_answers,
                 MAX(CASE WHEN u.role = 'teacher' AND a.accepted = 1 THEN 1 ELSE 0 END) AS teacher_accepted,
