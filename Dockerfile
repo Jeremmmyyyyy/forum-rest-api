@@ -1,6 +1,5 @@
-FROM php:8.5-cli-bookworm
+FROM php:8.4-cli-bookworm
 
-# 1. Install system dependencies
 RUN apt-get update && \
     apt-get install -y \
     libpng-dev \
@@ -17,11 +16,8 @@ RUN apt-get update && \
     --no-install-recommends && \
     rm -r /var/lib/apt/lists/*
 
-# 2. Install Standard Core Extensions (mysqli)
 RUN docker-php-ext-install mysqli
 
-# 3. Install IMAP (Manual Build from PECL)
-# Fix: We remove the .tgz file immediately after extraction so 'mv' only sees the directory.
 RUN pecl download imap && \
     tar -xf imap-*.tgz && \
     rm imap-*.tgz && \
