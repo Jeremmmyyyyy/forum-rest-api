@@ -31,19 +31,19 @@ services:
       - ./mysql-data:/var/lib/mysql
     restart: unless-stopped
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: forum_phpmyadmin
-    environment:
-      PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "8081:80"
-    networks:
-      - default
-    depends_on:
-      - db
-    restart: unless-stopped
+  # phpmyadmin:
+  #   image: phpmyadmin/phpmyadmin
+  #   container_name: forum_phpmyadmin
+  #   environment:
+  #     PMA_HOST: db
+  #     MYSQL_ROOT_PASSWORD: root
+  #   ports:
+  #     - "8081:80"
+  #   networks:
+  #     - default
+  #   depends_on:
+  #     - db
+  #   restart: unless-stopped
 
 networks:
   proxy-db:
